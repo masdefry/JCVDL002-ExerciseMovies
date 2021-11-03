@@ -1,21 +1,21 @@
-// Initialize Library
+// Init All Library
 const express = require('express')
 const app = express()
 const cors = require('cors')
 
-// Initialize Cors
+// Init Cors
 app.use(cors())
 
-// Initialize Body Parser
+// Init Body Parser
 app.use(express.json())
 
-// Initialize PORT
-const PORT = 3000
+// Init PORT
+const PORT = 5000 
 
-// Import Router 
+// Import Routers
 const UserRouter = require('./Routers/UserRouter')
 
-// Route 
+// Routing
 app.get('/', (req, res) => {
     res.status(200).send(
         '<h1>Bioskop PWD System API</h1>'

@@ -1,13 +1,14 @@
 const express = require('express')
 const Router = express.Router()
 
-// Import JWT Verify
-const jwtVerify = require('../Middleware/JWTVerify')
-
 // Import Controller
 const UserController = require('./../Controllers/UserController')
 
+// Import JWTVerify 
+const jwtVerify = require('./../Middleware/JWTVerify')
+
+// Routing
 Router.post('/register', UserController.register)
-Router.post('/deactive', jwtVerify, UserController.deactiveAccount)
+Router.patch('/deactive', jwtVerify, UserController.deactiveAccount)
 
 module.exports = Router
