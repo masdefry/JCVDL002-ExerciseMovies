@@ -38,7 +38,7 @@ const register = async(req, res) => {
             throw error
         })
 
-        if(checkEmail.length > 0) throw { status: 500, message: 'Error Validation', detail: 'Email Sudah Terdaftar' }
+        // if(checkEmail.length > 0) throw { status: 500, message: 'Error Validation', detail: 'Email Sudah Terdaftar' }
 
         // Step2.
         let passwordHashed = hashPassword(data.password)
@@ -81,6 +81,7 @@ const register = async(req, res) => {
         })
 
     } catch (error) {
+        await query('Rollback')
         if(error.status){
             // Error yang dikirim oleh kita
             res.status(error.status).send({
@@ -144,7 +145,116 @@ const deactiveAccount = (req, res) => {
     })
 }
 
+const searchAllMovies = (req, res) => {
+    let query = `
+        SELECT * FROM movies m 
+        JOIN movie_status ms ON m.status = ms.id
+        JOIN schedules s ON s.movie_id = m.id
+        JOIN locations l ON l.id = s.location_id
+        JOIN show_times st ON st.id = s.time_id
+    `
+
+    db.query(query, (err, result) => {
+        try {
+            if(err) throw err 
+
+            res.status(200).send({
+                error: false, 
+                message: 'Get Movies Success',
+                detail: 'Pencarian Semua Film Berhasil!',
+                data: result
+            })
+        } catch (error) {
+            res.status(500).send({
+                error: true, 
+                message: 'Error Server',
+                detail: error.message
+            })
+        }
+    })
+}
+
+const searchMoviesBy = (req, res) => {
+   let data = req.query 
+
+    // Step1. Validasi datanya. Yang tadinya ada %, kita hilangkan!    
+   if(data.status){
+       data.status = data.status.replace('%', ' ')
+   }
+
+   if(data.time){
+       data.time = data.time.replace('%', ' ')
+   }
+
+   let query = `
+        SELECT * FROM movies m 
+        JOIN movie_status ms ON m.status = ms.id
+        JOIN schedules s ON s.movie_id = m.id
+        JOIN locations l ON l.id = s.location_id
+        JOIN show_times st ON st.id = s.time_id
+        WHERE
+    `
+
+    let arr = []
+
+    // Step2. Kita buat query berdasarkan pencarian user
+    if(data.status){
+        if(query[query.length - 1] === '?'){
+            query += ' AND ms.status = ?'
+        }else{
+            query += ' ms.status = ?'
+        }
+
+        arr.push(data.status)
+    }
+
+    if(data.location){
+        if(query[query.length - 1] === '?'){
+            query += ' AND l.location = ?'
+        }else{
+            query += ' l.location = ?'
+        }
+
+        arr.push(data.location)
+    }
+
+    if(data.time){
+        if(query[query.length - 1] === '?'){
+            query += ' AND st.time = ?'
+        }else{
+            query += ' st.time = ?'
+        }
+
+        arr.push(data.time)
+    }
+
+    db.query(query, [...arr], (err, result) => {
+        try {
+            if(err) throw err 
+
+            if(result.length > 0){
+                res.status(200).send({
+                    error: false,
+                    message: 'Search Movies Success',
+                    detail: 'Pencarian Data Film Berhasil!',
+                    data: result
+                })
+            }else{
+                res.status(200).send({
+                    error: false, 
+                    message: 'Search Movies Failed',
+                    detail: 'Film yang Anda Cari Tidak Ditemukan! '
+                })
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    })
+}
+
 module.exports = {
     register,
-    deactiveAccount
+    deactiveAccount, 
+    searchAllMovies,
+    searchMoviesBy
 }

@@ -9,5 +9,7 @@ const UserController = require('./../Controllers/UserController')
 
 Router.post('/register', UserController.register)
 Router.post('/deactive', jwtVerify, UserController.deactiveAccount)
+Router.get('/all-movies', UserController.searchAllMovies)
+Router.get('/search-movies/get', UserController.searchMoviesBy)
 
 module.exports = Router

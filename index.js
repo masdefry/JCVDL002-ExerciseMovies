@@ -10,7 +10,7 @@ app.use(cors())
 app.use(express.json())
 
 // Initialize PORT
-const PORT = 3000
+const PORT = 5000
 
 // Import Router 
 const UserRouter = require('./Routers/UserRouter')
