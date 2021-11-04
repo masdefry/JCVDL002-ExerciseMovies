@@ -10,5 +10,7 @@ const jwtVerify = require('./../Middleware/JWTVerify')
 // Routing
 Router.post('/register', UserController.register)
 Router.patch('/deactive', jwtVerify, UserController.deactiveAccount)
+Router.get('/all-movies', UserController.searchAllMovies)
+Router.get('/search-movies', UserController.searchMoviesBy)
 
 module.exports = Router

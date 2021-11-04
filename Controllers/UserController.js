@@ -1,5 +1,4 @@
 // Import Library Untuk Rollback
-const { throws } = require('assert')
 const util = require('util')
 
 // Import Connection
@@ -32,9 +31,6 @@ const register = async(req, res) => {
         await query('Start Transaction')
 
         const checkEmail = await query(query1, data.email)
-        .catch((error) => {
-            throw error
-        })
 
         if(checkEmail.length > 0) throw { status: 406, message: 'Error Validation', detail: 'Email Sudah Terdaftar' } // Apabila data yang di dapat dari query1 lebih dari nol, maka kita anggap email sudah terdaftar
 
@@ -47,14 +43,8 @@ const register = async(req, res) => {
         }
 
         const insertData = await query(query2, dataToSend)
-        .catch((error) => {
-            throw error
-        })
 
         const getDataUser = await query(query3, insertData.insertId)
-        .catch((error) => {
-            throw error
-        })
 
         let token = jwtSign({ uid: getDataUser[0].uid, role: getDataUser[0].role })
         
@@ -75,6 +65,7 @@ const register = async(req, res) => {
         })
 
     } catch (error) {
+        await query('Rollback')
         if(error.status){
             // Kalau error status nya ada, berarti ini error yang kita buat
             res.status(error.status).send({
@@ -142,8 +133,103 @@ const deactiveAccount = (req, res) => {
     // Step2. Kita update status akunnya di DB
     // Step3. Kita kirim response
 }
+
+const searchAllMovies = (req, res) => {
+    let query = `
+        SELECT * FROM movies m
+        JOIN movie_status ms ON m.status = ms.id
+        JOIN schedules s ON s.movie_id = m.id
+        JOIN locations l ON l.id = s.location_id
+        JOIN show_times st ON st.id = s.time_id;
+    `
+
+    db.query(query, (err, result) => {
+        try {
+            if(err) throw err
+
+            res.status(200).send({
+                error: false, 
+                message: 'Search Movies Success',
+                data: result
+            })
+        } catch (error) {
+            res.status(500).send({
+                error: true,
+                message: 'Error From Server',
+                detail: error.message
+            })
+        }
+    })
+}
+
+const searchMoviesBy = (req, res) => {
+    const data = req.body 
+    
+    let query = `
+        SELECT * FROM movies m
+        JOIN movie_status ms ON m.status = ms.id
+        JOIN schedules s ON s.movie_id = m.id
+        JOIN locations l ON l.id = s.location_id
+        JOIN show_times st ON st.id = s.time_id WHERE
+    `
+
+    let arr = []
+
+    if(data.status){
+        if(query[query.length - 1] === '?'){
+            query += ' AND ms.status = ?'
+        }else{
+            query += ' ms.status = ?'
+        }
+
+        arr.push(data.status)
+    }
+
+    if(data.location){
+        if(query[query.length - 1] === '?'){
+            query += ' AND l.location = ?'
+        }else{
+            query += ' l.location = ?'
+        }
+
+        arr.push(data.location)
+    }
+
+    if(data.time){
+        if(query[query.length - 1] === '?'){
+            query += ' AND st.time = ?'
+        }else{
+            query += ' st.time = ?'
+        }
+
+        arr.push(data.time)
+    }
+
+    console.log(query)
+
+    db.query(query, [...arr], (err, result) => {
+        try {
+            if(err) throw err
+
+            res.status(200).send({
+                error: false, 
+                message: 'Search Movies By Success',
+                detail: 'Pencarian Anda Berhasil!',
+                data: result
+            })
+        } catch (error) {
+            res.status(500).send({
+                error: true, 
+                message: 'Error Server',
+                detail: error.message
+            })
+        }
+    })
+}
  
 module.exports = {
     register,
-    deactiveAccount
+    deactiveAccount,
+    searchAllMovies,
+    searchMoviesBy
 }
